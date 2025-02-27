@@ -1,0 +1,15 @@
+cd ~/nw_chem_IVA_pol_exp
+echo "Checking outputs/C_field0.0.out..."
+if grep -q "Total SCF energy" outputs/C_field0.0.out; then
+  echo "Energy found:"
+  grep "Total SCF energy" outputs/C_field0.0.out
+else
+  echo "No energy found."
+fi
+if grep -q "Multipole analysis" outputs/C_field0.0.out; then
+  echo "Dipole data found:"
+  grep -A 5 "Multipole analysis" outputs/C_field0.0.out | grep "1   1 0 0"
+else
+  echo "No dipole data found."
+fi
+ls -l outputs/
