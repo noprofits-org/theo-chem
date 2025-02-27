@@ -1,0 +1,7 @@
+cd ~/nw_chem_IVA_pol_exp
+for file in inputs/*.nw; do
+  base=$(basename "$file" .nw)
+  echo "Running $base..."
+  nwchem "$file" > "outputs/$base.out" 2>&1
+done
+ls -l outputs/
