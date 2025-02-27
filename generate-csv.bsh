@@ -1,0 +1,36 @@
+cd ~/nw_chem_IVA_pol_exp
+cat > scripts/extract_light_properties.sh << 'EOL'
+#!/bin/bash
+OUTPUT_DIR="outputs"
+RESULTS_FILE="analysis/properties.csv"
+mkdir -p analysis
+echo "Element,Dipole_X (a.u.),Alpha_xx (a.u.),Beta_xxx (a.u.),Gamma_xxxx (a.u.)" > "$RESULTS_FILE"
+ELEMENTS=("C" "Si" "Ge")
+FIELD=0.002
+
+for elem in "${ELEMENTS[@]}"; do
+  zero_file="$OUTPUT_DIR/${elem}_field0.0.out"
+  plus_file="$OUTPUT_DIR/${elem}_field0.002.out"
+  minus_file="$OUTPUT_DIR/${elem}_fieldminus0.002.out"
+
+  zero_dipole=$(grep -A 5 "Multipole analysis" "$zero_file" | grep "1   1 0 0" | awk '{print $4}' || echo "0.0")
+  plus_dipole=$(grep -A 5 "Multipole analysis" "$plus_file" | grep "1   1 0 0" | awk '{print $4}' || echo "0.0")
+  minus_dipole=$(grep -A 5 "Multipole analysis" "$minus_file" | grep "1   1 0 0" | awk '{print $4}' || echo "0.0")
+
+  if [[ "$zero_dipole" =~ ^[0-9.-]+$ ]] && [[ "$plus_dipole" =~ ^[0-9.-]+$ ]] && [[ "$minus_dipole" =~ ^[0-9.-]+$ ]]; then
+    alpha=$(echo "($plus_dipole - $minus_dipole) / (2 * $FIELD)" | bc -l)
+    beta=$(echo "($plus_dipole - 2 * $zero_dipole + $minus_dipole) / ($FIELD * $FIELD)" | bc -l)
+    gamma=$(echo "($plus_dipole - 2 * $zero_dipole + $minus_dipole) / ($FIELD * $FIELD * $FIELD)" | bc -l)
+  else
+    alpha="N/A"
+    beta="N/A"
+    gamma="N/A"
+  fi
+
+  echo "$elem,$zero_dipole,$alpha,$beta,$gamma" >> "$RESULTS_FILE"
+done
+
+cat "$RESULTS_FILE"
+EOL
+chmod +x scripts/extract_light_properties.sh
+./scripts/extract_light_properties.sh
